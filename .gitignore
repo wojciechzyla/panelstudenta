@@ -1,0 +1,8 @@
+.env
+info.txt
+migrations
+**/.idea
+**/__pycache__
+users_files/
+profile_pics/
+!profile_pics/default.png
