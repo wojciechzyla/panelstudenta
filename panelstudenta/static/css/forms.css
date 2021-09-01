@@ -1,0 +1,61 @@
+.form-content{
+    background-color: #413e47;
+    border-radius: 20px;
+    width: 80%;
+    box-shadow: 0px 0px 40px 5px #888888;
+    font-size: 17px;
+    padding: 15px;
+}
+
+.update-account-form{
+    border-radius: 20px;
+    box-shadow: 0px 0px 10px 5px #888888;
+    font-size: 17px;
+}
+
+.submit-button{
+    min-width:50px;
+    height:40px;
+    background-color: #a54eed;
+    border-color: #a54eed;
+    color: #d9d5d9;
+}
+
+.submit-button:hover{
+    background-color: #c073ff;
+    border-color: #c073ff;
+    color: #d9d5d9;
+}
+
+.submit-button:active{
+    background-color: #c073ff;
+    border: 1px solid #a54eed;
+    box-shadow: 0 0 0 0 #a54eed;
+}
+
+a.form-links{
+    text-decoration: none;
+    font-size: 17px;
+    color: #b888f7;
+}
+
+a.form-links:hover{
+    color: #d3b7f7;
+}
+
+.inupt-own:focus{
+  outline: none;
+  border: 1px solid #a54eed;
+  box-shadow: 0 0 0 0 #a54eed;
+}
+
+#delete-account-button{
+    min-width:50px;
+    height:40px;
+}
+
+#need-account{
+    font-size: 17px;
+    background-color: #a54eed;
+    border-color: #a54eed;
+}

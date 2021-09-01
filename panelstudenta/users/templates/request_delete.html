@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="container mt-5">
+        <div class="d-flex flex-row align-items-center justify-content-center">
+            <!-- Button trigger modal -->
+            <button type="button" style="width:150px;height:40px;" class="btn btn-danger" data-toggle="modal" data-target="#deleteModal">
+              Usuń konto
+            </button>
+        </div>
+
+        <!-- Modal -->
+        <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+          <div class="modal-dialog" role="document">
+            <div class="modal-content modal-content-own">
+              <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Jeśli nadal chcesz usunąć konto, na twój adres email zostanie wysłany link.</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true" class="modal-close-own">&times;</span>
+                </button>
+              </div>
+              <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal">Nie</button>
+                  <form method="POST" action="" enctype="multipart/form-data">
+                      {{ del_form.hidden_tag() }}
+                      {{ del_form.submit(class="btn btn-danger") }}
+                  </form>
+              </div>
+            </div>
+          </div>
+        </div>
+    </div>
+{% endblock content %}

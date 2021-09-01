@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block head %}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/forms.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/account.css') }}">
+{% endblock %}
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col p-0 mt-4">
+                    <div class="media">
+                        <img class="rounded-circle account-img" src="{{ image_file }}">
+                        <div class="media-body">
+                          <h2 class="account-heading">{{ current_user.username }}</h2>
+                          <p class="text-secondary">{{ current_user.email }}</p>
+                        </div>
+                    </div>
+             </div>
+        </div>
+        <div class="row">
+            <div class="col-12 col-sm-10 col-md-8 p-0 mt-4">
+                <div class="update-account-form w-100 p-3">
+                    <form method="POST" action="" enctype="multipart/form-data">
+                        {{ form.hidden_tag() }}
+                        <fieldset class="form-group">
+                            <div class="form-group">
+                                {{ form.username.label(class="form-control-label") }}
+                                {% if form.username.errors %}
+                                    {{ form.username(class="form-control form-control-lg is-invalid w-100 inupt-own", value=current_user.username) }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.username.errors %}
+                                            <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.username(class="form-control form-control-lg w-100 inupt-own", value=current_user.username) }}
+                                {% endif %}
+                            </div>
+                            <div class="form-group">
+                                {{ form.email.label(class="form-control-label") }}
+                                {% if form.email.errors %}
+                                    {{ form.email(class="form-control form-control-lg is-invalid w-100 inupt-own", value=current_user.email) }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.email.errors %}
+                                            <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.email(class="form-control form-control-lg w-100 inupt-own", value=current_user.email) }}
+                                {% endif %}
+                            </div>
+                            <div class="form-group mt-4 d-flex flex-column">
+                                {{ form.picture.label(class="mb-1") }}
+                                {{ form.picture(class="form-control-file fit-content-width") }}
+                                {% if form.picture.errors %}
+                                    {% for error in form.picture.errors %}
+                                        <span class="text-danger">{{ error }}</span></br>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <div class="form-check mt-4">
+                                {{ form.reset_picture(class="form-check-input") }}
+                                {{ form.reset_picture.label(class="form-check-label") }}
+                            </div>
+                        </fieldset>
+                        <div class="form-group">
+                            {{ form.submit(class="btn submit-button") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col mt-5 mb-4 p-0 justify-content-start">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <a href="{{ url_for('users.change_password') }}", class="default-link mr-4">
+                            <div class="d-flex flex-row align-items-center justify-content-center btn submit-button">
+                                <p class="header-text m-0">Zmień hasło</p>
+                            </div>
+                        </a>
+                        <a href="{{ url_for('users.request_delete') }}", class="default-link">
+                            <div class="d-flex flex-row align-items-center justify-content-center btn btn-danger" id="delete-account-button">
+                                <p class="header-text m-0">Usuń konto</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}

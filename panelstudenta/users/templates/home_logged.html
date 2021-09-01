@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="row pt-5">
+        <div class="col">
+            <h1 class="h1-primary">
+                Dostępne aplikacje
+            </h1>
+        </div>
+    </div>
+    <div class="row" style="margin-top:70px;">
+        <div class="col d-flex flex-wrap justify-content-center align-items-center">
+            <div class="d-flex flex-row align-items-center justify-content-start file-row p-1 mb-2">
+                <a href="{{ url_for('img2txt.imgtxt') }}" class="default-link file-link w-100">
+                    <div class="app-window d-flex align-items-center">
+                        <p class="m-0">Wyszukiwarka dokumentów</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

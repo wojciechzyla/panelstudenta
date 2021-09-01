@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block head %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/forms.css') }}">
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/files.css') }}">
+{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="row mt-3">
+        <div class="col p-0">
+            <div class="fit-content-width mb-3">
+                <h2 class="h2-primary">
+                    Wyszukiwarka plików
+                </h2>
+            </div>
+        </div>
+    </div>
+    <div class="row mb-4">
+        <div class="col p-0">
+            <p>
+                W tym miejscu możesz zapisywać pliki w formacie pdf, jpg, png. W wyszukiwarce możesz wpisywać interesujące Cię tematy a aplikacja wyszuka dokumenty najbardziej odpowiadające szukanemu hasłu.
+            </p>
+        </div>
+    </div>
+    <div class="row mb-5">
+        <div class="col mb-5 p-0" id="search-file-column">
+            <div class="fit-content-width fit-content-height mb-5 update-account-form p-4 d-flex flex-column justify-content-start align-items-start">
+                <div class="fit-content-width mb-2">
+                    <h2 class="h2-primary">
+                        Twoje pliki
+                    </h2>
+                </div>
+                {% if user_files_amount > 0 %}
+                    <div class="mb-3">
+                        <p class="m-0">
+                            Ilość plików zapisanych na serwerze: {{ user_files_amount }}.
+                        </p>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('img2txt.user_files') }}", class="default-link">
+                            <div class="d-flex flex-row align-items-center justify-content-center btn submit-button">
+                                <p class="header-text m-0">Przeglądaj swoje pliki</p>
+                            </div>
+                        </a>
+                    </div>
+                {% else %}
+                    <div>
+                        <p>
+                            Nie masz jeszcze żadnych plików.
+                        </p>
+                    </div>
+                    <div>
+                        <a href="{{ url_for('img2txt.user_files') }}", class="default-link">
+                            <div class="d-flex flex-row align-items-center justify-content-center btn submit-button">
+                                <p class="header-text m-0">Dodaj nowe pliki</p>
+                            </div>
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="d-flex flex-column update-account-form p-3" id="file-search-div">
+                <div>
+                    <form method="POST" action="" enctype="multipart/form-data">
+                            {{ search_form.hidden_tag() }}
+                            <fieldset class="form-group">
+                                <legend class="mb-4">Szukaj plików</legend>
+                                <div class="form-group">
+                                    {{ search_form.searchbox(class="form-control inupt-own", id="document_query") }}
+                                    {% if search_form.searchbox.errors %}
+                                        {% for error in search_form.searchbox.errors %}
+                                            <span class="text-danger">{{ error }}</span></br>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                                <div class="form-group d-flex align-items-center">
+                                    {{ search_form.amount.label(class="mb-0 mr-2") }}
+                                    {{ search_form.amount(class="form-control inupt-own", id="document_amount", value=1) }}
+                                    {% if search_form.amount.errors %}
+                                        {% for error in search_form.amount.errors %}
+                                            <span class="text-danger">{{ error }}</span></br>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </fieldset>
+                            <div class="form-group">
+                                {{ search_form.submit(class="btn submit-button") }}
+                            </div>
+                    </form>
+                </div>
+                {% if ranked_docs %}
+                    {% set ns = namespace(doc_no=1) %}
+                    {%  for doc in ranked_docs %}
+                        <div class="d-flex flex-row align-items-center justify-content-start file-row p-1 mb-2">
+                            <div class="mr-2">
+                                {{ ns.doc_no }}.
+                            </div>
+                            <a href="{{ url_for('img2txt.file', file_name=doc[0]) }}" target=”_blank” class="default-link file-link w-100">
+                                <div class="file-name">
+                                    <p class="m-0">{{ doc[0] }} </p>
+                                </div>
+                            </a>
+                        </div>
+                        {% set ns.doc_no = ns.doc_no+1 %}
+                    {% endfor %}
+                {% elif no_docs %}
+                    <div>
+                        <p>Nie masz żadnych dokumentów!!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock content %}

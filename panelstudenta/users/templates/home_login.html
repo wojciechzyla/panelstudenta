@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block head %}
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/forms.css') }}">
+{% endblock %}
+{% block content %}
+    <div class="container">
+        <div class="row pt-5">
+            <div class="col">
+                <h1 class="h1-primary">
+                    Witaj w panelu studenta! Aby kontynuować musisz się zalogować.
+                </h1>
+            </div>
+        </div>
+        <div class="row" style="margin-top:70px;">
+            <div class="col d-flex justify-content-center">
+                <div class="form-content">
+                    <form method="POST" action="">
+                        {{ form_log.hidden_tag() }}
+                        <fieldset class="form-group">
+                            <div class="form-group">
+                                {% if form_log.email.errors %}
+                                    {{ form_log.email(class="form-control form-control-lg is-invalid w-100 inupt-own") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form_log.email.errors %}
+                                            <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form_log.email(class="form-control form-control-lg w-100 inupt-own") }}
+                                {% endif %}
+                            </div>
+                            <div class="form-group">
+                                {% if form_log.password.errors %}
+                                    {{ form_log.password(class="form-control form-control-lg is-invalid w-100 inupt-own", id="password") }}
+                                    <div class="invalid-feedback">
+                                        {% for error in form_log.password.errors %}
+                                            <span>{{ error }}</span>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form_log.password(class="form-control form-control-lg w-100 inupt-own", id="password") }}
+                                {% endif %}
+                            </div>
+                            <div class="form-group d-flex align-items-center">
+                                {{ form_log.submit(class="btn submit-button", value="Zaloguj się") }}
+                                <div class="form-check d-flex align-items-center ml-1">
+                                    {{ form_log.remember(class="form-check-input m-0") }}
+                                    {{ form_log.remember.label(class="form-check-label ml-4") }}
+                                </div>
+                            </div>
+                        </fieldset>
+                    </form>
+                    <div>
+                        <a href="{{ url_for('users.request_reset') }}" class="form-links">Zapomniałeś/aś hasła</a>
+                        lub <a class="form-links" href="{{ url_for('users.register') }}">Nie masz konta? </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock content %}

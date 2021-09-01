@@ -1,0 +1,61 @@
+:root {
+  --delete-button-width: 53px;
+}
+
+.file-row:hover{
+    background-color: #5c5c5c;
+}
+
+.delete-button{
+    width: var(--delete-button-width);
+}
+
+.file-link{
+   width: calc(100% - var(--delete-button-width));
+   overflow: hidden;
+}
+
+.file-name{
+    text-align-center;
+    width: 100%;
+    color: #d9d5d9;
+}
+
+#document_amount{
+    width: 66px;
+}
+
+#document_query{
+    width: 400px;
+}
+
+@media screen and (min-width: 1000px) {
+    #search-file-column{
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: start;
+    }
+
+    #document_query{
+        width: 500px;
+    }
+}
+
+@media screen and (max-width: 999px) {
+    #search-file-column{
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: center;
+    }
+
+    #document_query{
+        width: 100%;
+    }
+
+    #file-search-div{
+        width: 80%;
+    }
+}
+

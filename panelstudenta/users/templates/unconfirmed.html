@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1>Brak potwierdzonego adresu email</h1>
+    <br>
+    <p>Twój email nie został jeszcze potwierdzony. Sprawdź swoją skrzynkę email (oraz folder spam).</p>
+    <p>Wiadomość nie doszła? <a href="{{ url_for('users.resend_confirmation') }}" class="default-link">Wyślij jeszcze raz</a>.</p>
+{% endblock content %}
