@@ -4,5 +4,5 @@ migrations
 **/.idea
 **/__pycache__
 users_files/
-profile_pics/
-!profile_pics/default.png
+*.png
+!default.png

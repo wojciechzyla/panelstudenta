@@ -8,7 +8,15 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+    <!-- Own files -->
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main.css') }}">
+    <script type="text/javascript" src="{{ url_for('static', filename='js/responsive_navbar.js') }}"></script>
 
     {% if title %}
      <title>{{ title }}</title>
@@ -20,47 +28,89 @@
 <body>
     <header class="header-own site-header d-flex align-items-center">
         <div class="container">
-            <div class="row">
-                <div class="col-12 col-md-6 d-flex align-items-center">
-                    <div class="d-flex align-items-center justify-content-center fit-content-width">
-                        <a href="{{ url_for('users.home') }}", class="default-link">
-                            <div class="d-flex flex-row align-items-center justify-content-center">
-                                <b class="header-text header-bold">Panel studenta</b>
-                                <p class="header-text ml-1 mr-1 mt-0 mb-0">-</p>
-                                <p class="header-text m-0">zapanuj nad studiami</p>
-                            </div>
-                        </a>
-                    </div>
-                </div>
-                <div class="col-0 col-md-6 d-flex justify-content-end align-items-center">
-                    {% if current_user.is_authenticated %}
-                    <nav class="big-nav">
-                        <a href="{{ url_for('users.account') }}", class="default-link">
-                            <div class="d-flex flex-row align-items-center justify-content-center p-2 header-button">
-                                <p class="header-text m-0">Konto</p>
-                            </div>
-                        </a>
-                        <a href="{{ url_for('users.home') }}", class="default-link">
-                            <div class="d-flex flex-row align-items-center justify-content-center p-2 ml-2 mr-2 header-button">
-                                <p class="header-text m-0">Strona głowna</p>
-                            </div>
-                        </a>
-                        <a href="{{ url_for('users.logout') }}", class="default-link">
-                            <div class="d-flex flex-row align-items-center justify-content-center p-2 header-button">
-                                <p class="header-text m-0">Wyloguj</p>
-                            </div>
-                        </a>
-                        {% if not current_user.confirmed %}
-                            <a href="{{ url_for('users.unconfirmed') }}", class="default-link">
-                                <div class="d-flex flex-row align-items-center justify-content-center p-2 header-button">
-                                    <p class="header-text m-0">Potwierdź email</p>
+            <nav class="big-nav navbar-dark">
+                <div class="row w-100  d-flex align-items-center">
+                    <div class="col-10 col-md-6 d-flex align-items-center">
+                        <div class="fit-content-width logo-big">
+                            <a href="{{ url_for('users.home') }}", class="default-link">
+                                <div class="d-flex flex-row align-items-center justify-content-center">
+                                    <b class="header-text header-bold">Panel studenta</b>
+                                    <p class="header-text ml-1 mr-1 mt-0 mb-0">-</p>
+                                    <p class="header-text m-0">zapanuj nad studiami</p>
                                 </div>
                             </a>
+                        </div>
+                    </div>
+                    <div class="col-2 col-md-6 d-flex justify-content-end align-items-center">
+                        {% if current_user.is_authenticated %}
+                            <button class="navbar-toggler navbar-button" type="button">
+                              <span class="navbar-toggler-icon"></span>
+                            </button>
+                            <div class="big-menu">
+                                <a href="{{ url_for('users.account') }}", class="default-link">
+                                    <div class="d-flex flex-row align-items-center justify-content-center p-2 header-button">
+                                        <p class="header-text m-0">Konto</p>
+                                    </div>
+                                </a>
+                                <a href="{{ url_for('users.home') }}", class="default-link">
+                                    <div class="d-flex flex-row align-items-center justify-content-center p-2 ml-2 mr-2 header-button">
+                                        <p class="header-text m-0">Strona głowna</p>
+                                    </div>
+                                </a>
+                                <a href="{{ url_for('users.logout') }}", class="default-link">
+                                    <div class="d-flex flex-row align-items-center justify-content-center p-2 header-button">
+                                        <p class="header-text m-0">Wyloguj</p>
+                                    </div>
+                                </a>
+                                {% if not current_user.confirmed %}
+                                    <a href="{{ url_for('users.unconfirmed') }}", class="default-link">
+                                        <div class="d-flex flex-row align-items-center justify-content-center p-2 header-button">
+                                            <p class="header-text m-0">Potwierdź email</p>
+                                        </div>
+                                    </a>
+                                {% endif %}
+                            </div>
                         {% endif %}
-                    </nav>
-                    {% endif %}
+                    </div>
                 </div>
-            </div>
+                {% if current_user.is_authenticated %}
+                    <div class="row w-100">
+                        <div class="col-12 col-md-0">
+                            <div class="small-menu-default">
+                                <div class="fit-content-width logo-small">
+                                    <a href="{{ url_for('users.home') }}", class="default-link">
+                                        <div class="d-flex align-items-center justify-content-center">
+                                            <b class="header-text header-bold">Panel studenta</b>
+                                        </div>
+                                    </a>
+                                </div>
+                                <a href="{{ url_for('users.account') }}", class="default-link">
+                                    <div class="d-flex flex-row align-items-center justify-content-center p-2 header-button">
+                                        <p class="header-text m-0">Konto</p>
+                                    </div>
+                                </a>
+                                <a href="{{ url_for('users.home') }}", class="default-link">
+                                    <div class="d-flex flex-row align-items-center justify-content-center p-2 ml-2 mr-2 header-button">
+                                        <p class="header-text m-0">Strona głowna</p>
+                                    </div>
+                                </a>
+                                <a href="{{ url_for('users.logout') }}", class="default-link">
+                                    <div class="d-flex flex-row align-items-center justify-content-center p-2 header-button">
+                                        <p class="header-text m-0">Wyloguj</p>
+                                    </div>
+                                </a>
+                                {% if not current_user.confirmed %}
+                                    <a href="{{ url_for('users.unconfirmed') }}", class="default-link">
+                                        <div class="d-flex flex-row align-items-center justify-content-center p-2 header-button">
+                                            <p class="header-text m-0">Potwierdź email</p>
+                                        </div>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </nav>
         </div>
     </header>
     <main>
@@ -105,11 +155,5 @@
             </div>
         </div>
     </footer>
-
-    <!-- Optional JavaScript -->
-    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
-    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
 </body>
 </html>

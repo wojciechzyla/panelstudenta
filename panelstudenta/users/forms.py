@@ -8,7 +8,7 @@ from panelstudenta.models import User
 from flask_login import current_user
 import re
 
-MIN_PASS = 3
+MIN_PASS = 11
 MAX_PASS = 50
 MIN_USR = 5
 MAX_USR = 20

@@ -113,6 +113,17 @@ a.footer-link:hover{
     color: #f2f2f2;
 }
 
+.big-nav{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.small-menu-default{
+    display: none;
+}
+
 @media screen and (min-width: 768px) {
   .h1-primary {
     font-size: 60px;
@@ -131,13 +142,17 @@ a.footer-link:hover{
     padding-right: 15px;
   }
 
-  .big-nav{
+  .navbar-button{
+    display: none;
+  }
+
+  .big-menu{
     display: flex;
-    justify-content: center;
+    justify-content: end;
     align-items: center;
   }
 
-  .small-nav{
+  .small-menu{
     display: none;
   }
 
@@ -167,13 +182,18 @@ a.footer-link:hover{
     padding-bottom: 5px;
   }
 
-  .big-nav{
+   .navbar-button{
+    display: block;
+   }
+
+   .big-menu{
     display: none;
   }
 
-  .small-nav{
+  .small-menu{
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    justify-content: end;
     align-items: center;
   }
 
@@ -183,4 +203,35 @@ a.footer-link:hover{
     justify-content: start;
     align-items: flex-start;
   }
+}
+
+@media screen and (min-width: 450px) {
+    .logo-big{
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .logo-small{
+        display: none;
+    }
+}
+
+@media screen and (max-width: 449px) {
+    .logo-small{
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        margin-top: 2px;
+        margin-bottom: 2px;
+    }
+
+    .logo-small>a>div{
+        flex-direction: row;
+    }
+
+    .logo-big{
+        display: none;
+    }
 }
