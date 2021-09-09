@@ -1,8 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from flask import render_template, url_for, flash, redirect, \
-    request, abort, session, Blueprint, current_app, send_from_directory
-from werkzeug.utils import safe_join
+    request, abort, session, Blueprint, send_file
 from panelstudenta.img2txt.forms import NewFileForm, FindFileForm
 from panelstudenta import db
 from panelstudenta.models import File
@@ -10,31 +9,48 @@ from panelstudenta.general_utils import check_confirmed
 from flask_login import current_user, login_required
 import os
 import requests
+import base64
+import json
+from io import BytesIO
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 
 
 img2txt = Blueprint('img2txt', __name__, template_folder='templates')
+URL_USER_FILES = os.environ.get("URL_USER_FILES")
+USER_FILES_LOGIN = os.environ.get("USER_FILES_LOGIN")
+USER_FILES_PASSWORD = os.environ.get("USER_FILES_PASSWORD")
+files_authentication = {"USER_LOGIN": USER_FILES_LOGIN,
+                        "USER_PASSWORD": USER_FILES_PASSWORD}
 
 
-@img2txt.route("/imgtxt/<file_name>", methods=['GET', 'POST'])
+@img2txt.route("/imgtxt/<file_name>", methods=['GET'])
 @check_confirmed
 @login_required
 def file(file_name):
-    filepath = os.path.join(current_app.root_path, "static/users_files", current_user.username)
-    if os.path.exists(safe_join(filepath, file_name)):
-        return send_from_directory(filepath, file_name)
+    get_file_url = URL_USER_FILES+"get/"+str(current_user.id)+"/"+file_name
+    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+
+    get_file = requests.get(get_file_url, data=json.dumps(files_authentication), headers=headers)
+    if 400 <= get_file.status_code < 600:
+        abort(get_file.status_code, get_file.json())
     else:
-        abort(404)
+        file_b64 = get_file.json()["file"]
+        file_display = base64.b64decode(file_b64.encode('utf-8'))
+        file_name = get_file.json()["filename"]
+        return send_file(BytesIO(file_display), download_name=file_name)
 
 
-@img2txt.route("/imgtxt/<int:file_id>/delete_file", methods=['POST'])
+@img2txt.route("/imgtxt/<int:file_id>/<filename>/delete_file", methods=['POST'])
 @login_required
 @check_confirmed
-def delete_file(file_id):
+def delete_file(file_id, filename):
+    remove_url = URL_USER_FILES + "delete_file/" + str(current_user.id) + "/" + str(filename)
+    remove_resp = requests.post(remove_url, json=files_authentication)
+    if 400 <= remove_resp.status_code < 600:
+        abort(remove_resp.status_code, remove_resp.json())
+
     file_to_delete = File.query.get_or_404(file_id)
-    path_to_file = os.path.join(current_app.root_path, "static/users_files", current_user.username, file_to_delete.name)
-    os.remove(path_to_file)
     db.session.delete(file_to_delete)
     db.session.commit()
     flash("Plik został usunięty!", "success")
@@ -49,31 +65,39 @@ def user_files():
 
     # Adding new img2txt
     if form.validate_on_submit():
-        if not os.path.exists(os.path.join(current_app.root_path, "static/users_files", current_user.username)):
-            os.makedirs(os.path.join(current_app.root_path, "static/users_files", current_user.username))
-        file_path = os.path.join(current_app.root_path, "static/users_files", current_user.username,
-                                 form.file.data.filename)
-        form.file.data.save(file_path)
 
-        # SEKCJA DO EDYCJI
-        files = {'file': open(file_path, 'rb')}
+        pdf_b64 = base64.b64encode(form.file.data.read()).decode("utf8")
+        files_authentication["file"] = pdf_b64
+        files_authentication["filename"] = form.file.data.filename
+        headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+
+        file_upload_url = URL_USER_FILES + "upload/" + str(current_user.id)
+        add_resp = requests.post(file_upload_url, data=json.dumps(files_authentication), headers=headers)
+        if 400 <= add_resp.status_code < 500:
+            abort(add_resp.status_code, add_resp.json())
+
+        filename = form.file.data.filename
+
+        files = {'file': pdf_b64, "filename": filename}
         URL_img = os.environ.get("URL_IMG")
         URL_nlp = os.environ.get("URL_NLP_PREP")
         try:
-            response = requests.post(URL_img, files=files)
+            response = requests.post(URL_img, data=json.dumps(files), headers=headers)
         except requests.exceptions.ConnectionError:
+            remove_url = URL_USER_FILES + "delete_file/" + str(current_user.id) + "/" + str(filename)
+            remove_resp = requests.post(remove_url, json=files_authentication)
             flash("Problem z połączeniem", "danger")
-            os.remove(file_path)
             return redirect(url_for("img2txt.user_files"))
 
         if response.status_code == 200:
             ocr_response = response.json()
         else:
-            os.remove(file_path)
+            remove_url = URL_USER_FILES + "delete_file/" + str(current_user.id) + "/" + str(filename)
+            remove_resp = requests.post(remove_url, json=files_authentication)
             abort(response.status_code, response.json())
-        # KONIEC SEKCJI
 
         response = requests.post(URL_nlp, json=ocr_response)
+
         if response.status_code == 200:
             new_file = File(name=form.file.data.filename, owner=current_user, text=response.json())
             db.session.add(new_file)
@@ -81,7 +105,8 @@ def user_files():
             flash("Dodano nowy plik!", "success")
             return redirect(url_for("img2txt.user_files"))
         else:
-            os.remove(file_path)
+            remove_url = URL_USER_FILES + "delete_file/" + str(current_user.id) + "/" + str(filename)
+            remove_resp = requests.post(remove_url, json=files_authentication)
             abort(response.status_code, response.json())
 
     page = request.args.get('page', 1, type=int)

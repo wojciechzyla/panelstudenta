@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from flask import render_template, url_for, flash, redirect, Blueprint, request, current_app
+from flask import render_template, url_for, flash, redirect, Blueprint, request, current_app, abort
 from panelstudenta.users.forms import RegistrationForm, UpdateAccountForm, \
     RequestResetForm, ResetPasswordForm, ChangePasswordForm, DeleteAccountForm, LoginForm
 from panelstudenta.users.utils import send_reset_email, send_delete_email, save_profile_pic, send_confirm_email
@@ -9,10 +9,14 @@ from panelstudenta import db, bcrypt
 from panelstudenta.models import User, File
 from flask_login import current_user, logout_user, login_required, login_user
 import os
-import shutil
 import datetime
+import requests
 
 users = Blueprint('users', __name__, template_folder='templates')
+URL_USER_FILES = os.environ.get("URL_USER_FILES")
+USER_FILES_LOGIN = os.environ.get("USER_FILES_LOGIN")
+USER_FILES_PASSWORD = os.environ.get("USER_FILES_PASSWORD")
+files_authentication = {"USER_LOGIN": USER_FILES_LOGIN, "USER_PASSWORD": USER_FILES_PASSWORD}
 
 
 @users.route("/", methods=['GET', 'POST'])
@@ -39,8 +43,6 @@ def register():
     if form_reg.validate_on_submit():
         hashed_pass = bcrypt.generate_password_hash(form_reg.password.data).decode('utf-8')
         user = User(username=form_reg.username.data, email=form_reg.email.data, password=hashed_pass, confirmed=False)
-        if not os.path.exists(os.path.join(current_app.root_path, "static/users_files", form_reg.username.data)):
-            os.makedirs(os.path.join(current_app.root_path, "static/users_files", form_reg.username.data))
         db.session.add(user)
         db.session.commit()
         send_confirm_email(user)
@@ -55,7 +57,6 @@ def register():
 def unconfirmed():
     if current_user.confirmed:
         return redirect('users.home')
-    #flash('Proszę potwierdzić swój adres email!', 'warning')
     return render_template('unconfirmed.html')
 
 
@@ -97,20 +98,24 @@ def account():
     form = UpdateAccountForm()
 
     if form.validate_on_submit():
-        path_to_profile_pic = os.path.join(current_app.root_path, "static/profile_pics", current_user.image_file)
         if form.picture.data:
-            picture_file = save_profile_pic(form.picture.data)
+            picture_file = save_profile_pic(form.picture.data, current_user.id)
             if current_user.image_file != "default.png":
                 # Remove  previous profile picture
-                os.remove(path_to_profile_pic)
+                remove_url = URL_USER_FILES+"delete_profile_pic/"+str(current_user.id)+"/"+ str(current_user.image_file)
+                remove_resp = requests.post(remove_url, json=files_authentication)
+                if 400 <= remove_resp.status_code < 600:
+                    abort(remove_resp.status_code, remove_resp.json())
             current_user.image_file = picture_file
+
         if form.reset_picture.data and current_user.image_file != "default.png":
             # Reset profile picture
-            os.remove(path_to_profile_pic)
+            remove_url = URL_USER_FILES + "delete_profile_pic/" + str(current_user.id) + "/" + str(current_user.image_file)
+            remove_resp = requests.post(remove_url, json=files_authentication)
+            if 400 <= remove_resp.status_code < 600:
+                abort(remove_resp.status_code, remove_resp.json())
             current_user.image_file = "default.png"
-        path_to_user_files = os.path.join(current_app.root_path, "static/users_files", current_user.username)
-        path_to_new_user_files = os.path.join(current_app.root_path, "static/users_files", form.username.data)
-        os.rename(path_to_user_files, path_to_new_user_files)
+
         current_user.username = form.username.data
 
         # confirm new email
@@ -124,7 +129,15 @@ def account():
         flash("Dane zostały zaktualizowane", "success")
         return redirect(url_for("users.account"))
 
-    image_file = url_for("static", filename="profile_pics/" + current_user.image_file)
+    if current_user.image_file == "default.png":
+        image_file = url_for('static', filename='profile_pics/default.png')
+    else:
+        get_profile_url = URL_USER_FILES + "get_profile/" + str(current_user.id) + "/" + str(current_user.image_file)
+        get_profile = requests.get(get_profile_url, json=files_authentication)
+        if 400 <= get_profile.status_code < 600:
+            abort(get_profile.status_code, get_profile.json())
+        else:
+            image_file = get_profile.json()["img_url"]
     return render_template("account.html", title="Konto", image_file=image_file, form=form)
 
 
@@ -148,15 +161,13 @@ def delete_account(token):
         flash("Link usuwający konto wygasł lub jest nieważny", "warning")
         return redirect(url_for('users.home'))
     else:
-        dir_to_files = os.path.join(current_app.root_path, "static/users_files", user.username)
+        # remove files of this user
+        remove_user_url = URL_USER_FILES+"delete_user/"+str(current_user.id)
+        remove_user = requests.post(remove_user_url, json=files_authentication)
+
         if current_user.is_authenticated:
             logout_user()
-        # remove files of this user
-        shutil.rmtree(dir_to_files)
-        if user.image_file != "default.png":
-            # remove profile picture of this user
-            path_to_profile_pic = os.path.join(current_app.root_path, "static/profile_pics", user.image_file)
-            os.remove(path_to_profile_pic)
+
         files_to_del = File.query.filter_by(owner=user).all()
         for f in files_to_del:
             db.session.delete(f)

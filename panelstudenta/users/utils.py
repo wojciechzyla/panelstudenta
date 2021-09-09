@@ -1,10 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from flask import url_for, current_app
+from flask import url_for, abort
 from panelstudenta import mail
 import secrets
 import os
-from PIL import Image
+import json
+import base64
+import requests
 from flask_mail import Message
 
 
@@ -50,13 +52,25 @@ def send_confirm_email(user):
     mail.send(msg)
 
 
-def save_profile_pic(form_picture):
+def save_profile_pic(form_picture, user_id):
+    USER_FILES_LOGIN = os.environ.get("USER_FILES_LOGIN")
+    USER_FILES_PASSWORD = os.environ.get("USER_FILES_PASSWORD")
+    files_authentication = {"USER_LOGIN": USER_FILES_LOGIN,
+                            "USER_PASSWORD": USER_FILES_PASSWORD}
+
     random_hex = secrets.token_hex(8)
     _, extention = os.path.splitext(form_picture.filename)
     filename = random_hex + extention
-    picture_path = os.path.join(current_app.root_path, "static/profile_pics", filename)
-    output_size = 125, 125
-    i = Image.open(form_picture)
-    i.thumbnail(output_size)
-    i.save(picture_path)
+
+    URL_USER_FILES = os.environ.get("URL_USER_FILES")
+    add_profile_url = URL_USER_FILES+"upload_profile/"+str(user_id)
+
+    im_b64 = base64.b64encode(form_picture.read()).decode("utf8")
+    headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
+    files_authentication["image"] = im_b64
+    files_authentication["filename"] = filename
+
+    add_resp = requests.post(add_profile_url, data=json.dumps(files_authentication), headers=headers)
+    if 400 <= add_resp.status_code < 500:
+        abort(add_resp.status_code, add_resp.json())
     return filename

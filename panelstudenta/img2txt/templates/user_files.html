@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% block head %}
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/forms.css') }}">
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/files.css') }}">
 <script type="text/javascript" src="{{ url_for('static', filename='js/user_files.js') }}"></script>
@@ -54,7 +53,7 @@
                                     <p class="m-0">{{ file.name }} </p>
                                 </div>
                             </a>
-                            <button type="button" class="btn btn-danger btn-sm ml-1 delete-button" data-toggle="modal" data-target="#deleteModal" data-filename="{{ file.name }}" data-url="{{ url_for('img2txt.delete_file', file_id=file.id) }}">Usuń</button>
+                            <button type="button" class="btn btn-danger btn-sm ml-1 delete-button" data-toggle="modal" data-target="#deleteModal" data-filename="{{ file.name }}" data-url="{{ url_for('img2txt.delete_file', file_id=file.id, filename=file.name) }}">Usuń</button>
                         </div>
 
                     {% endfor %}
