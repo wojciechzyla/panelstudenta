@@ -11,6 +11,7 @@ from flask_login import current_user, logout_user, login_required, login_user
 import os
 import datetime
 import requests
+import threading
 
 users = Blueprint('users', __name__, template_folder='templates')
 URL_USER_FILES = os.environ.get("URL_USER_FILES")
@@ -47,7 +48,7 @@ def register():
         db.session.commit()
         send_confirm_email(user)
         login_user(user)
-        flash(f'Utworzono konto dla: {form_reg.username.data}! Na podany adres email została wysłana wiadomość z potwierdzeniem', 'success')
+        flash(f'Utworzono konto dla: {form_reg.username.data}! Na podany adres email za chwilę zostanie wysłana wiadomość z potwierdzeniem.', 'success')
         return redirect(url_for('users.unconfirmed'))
     return render_template("registration.html", form_reg=form_reg, title="Rejestracja")
 
@@ -80,7 +81,8 @@ def confirm_email(token):
 @users.route('/resend')
 @login_required
 def resend_confirmation():
-    send_confirm_email(current_user)
+    thread = threading.Thread(target=send_confirm_email, kwargs={'user': current_user})
+    thread.start()
     flash('Nowy email z potwierdzeniem został wysłany', 'success')
     return redirect(url_for('users.unconfirmed'))
 

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-from flask import url_for, abort
+from flask import url_for, abort, current_app
 from panelstudenta import mail
 import secrets
 import os

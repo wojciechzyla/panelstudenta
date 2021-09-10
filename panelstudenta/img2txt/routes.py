@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 from flask import render_template, url_for, flash, redirect, \
     request, abort, session, Blueprint, send_file
+from werkzeug.utils import secure_filename
 from panelstudenta.img2txt.forms import NewFileForm, FindFileForm
 from panelstudenta import db
-from panelstudenta.models import File
+from panelstudenta.models import File, User
 from panelstudenta.general_utils import check_confirmed
 from flask_login import current_user, login_required
 import os
@@ -71,7 +72,7 @@ def user_files():
 
         pdf_b64 = base64.b64encode(form.file.data.read()).decode("utf8")
         files_authentication["file"] = pdf_b64
-        files_authentication["filename"] = form.file.data.filename
+        files_authentication["filename"] = secure_filename(form.file.data.filename)
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
         file_upload_url = URL_USER_FILES + "/upload/" + str(current_user.id)
@@ -79,68 +80,51 @@ def user_files():
         if 400 <= add_resp.status_code < 500:
             abort(add_resp.status_code, add_resp.json())
 
-        filename = form.file.data.filename
+        filename = secure_filename(form.file.data.filename)
 
         files = {'file': pdf_b64, "filename": filename}
-        URL_img = os.environ.get("URL_IMG")+"/"
-        URL_nlp = URL_NLP+"/preprocess"
-        try:
-            response = requests.post(URL_img, data=json.dumps(files), headers=headers)
-        except requests.exceptions.ConnectionError:
-            remove_url = URL_USER_FILES + "/delete_file/" + str(current_user.id) + "/" + str(filename)
-            remove_resp = requests.post(remove_url, json=files_authentication)
-            flash("Problem z przetwarzaniem obrazów", "danger")
-            return redirect(url_for("img2txt.user_files"))
-
-        if response.status_code == 200:
-            ocr_response = response.json()
-        else:
-            remove_url = URL_USER_FILES + "/delete_file/" + str(current_user.id) + "/" + str(filename)
-            remove_resp = requests.post(remove_url, json=files_authentication)
-            abort(response.status_code, response.json())
-
-        response = requests.post(URL_nlp, json=ocr_response)
-
-        if response.status_code == 200:
-            new_file = File(name=form.file.data.filename, owner=current_user, text=response.json())
-            db.session.add(new_file)
-            db.session.commit()
-            flash("Dodano nowy plik!", "success")
-            return redirect(url_for("img2txt.user_files"))
-        else:
-            remove_url = URL_USER_FILES + "/delete_file/" + str(current_user.id) + "/" + str(filename)
-            remove_resp = requests.post(remove_url, json=files_authentication)
-            flash("Problem z analizą tekstu", "danger")
-            abort(response.status_code, response.json())
+        URL_img = os.environ.get("URL_IMG")+"/"+str(current_user.id)
+        requests.post(URL_img, data=json.dumps(files), headers=headers)
 
     page = request.args.get('page', 1, type=int)
     files_display = File.query.filter_by(owner=current_user).paginate(page=page, per_page=5)
     return render_template("user_files.html", title="Wyszukiwarka plików", form=form, files_display=files_display)
 
 
-@img2txt.route("/imgtxt/files/img_receive/<filename>", methods=['POST'])
-@login_required
-@check_confirmed
-def img_receive(filename):
+@img2txt.route("/imgtxt/files/img_receive/<filename>/<user_id>", methods=['POST'])
+def img_receive(filename, user_id):
     data = request.get_json()
 
     def call_nlp(**kwargs):
         params = kwargs.get('post_data')
-        requests.post(URL_NLP+"/preprocess/"+filename, json=params)
+        status_code = int(params['status_code'])
+        if status_code < 400:
+            params.pop("status_code", None)
+            requests.post(URL_NLP+"/preprocess/"+filename+"/"+user_id, json=params)
+        else:
+            remove_url = URL_USER_FILES + "/delete_file/" + str(user_id) + "/" + str(filename)
+            requests.post(remove_url, json=files_authentication)
 
     thread = threading.Thread(target=call_nlp, kwargs={'post_data': data})
     thread.start()
     return {"info": "accepted"}, 202
 
 
-@img2txt.route("/imgtxt/files/nlp_receive/<filename>", methods=['POST'])
-@login_required
-@check_confirmed
-def nlp_receive(filename):
+@img2txt.route("/imgtxt/files/nlp_receive/<filename>/<user_id>", methods=['POST'])
+def nlp_receive(filename, user_id):
     data = request.get_json()
-    new_file = File(name=filename, owner=current_user, text=data)
-    db.session.add(new_file)
-    db.session.commit()
+    status_code = int(data["status_code"])
+
+    if status_code < 400:
+        data.pop("status_code", None)
+        user = User.query.get(int(user_id))
+        new_file = File(name=filename, owner=user, text=data)
+        db.session.add(new_file)
+        db.session.commit()
+    else:
+        remove_url = URL_USER_FILES + "/delete_file/" + str(user_id) + "/" + str(filename)
+        requests.post(remove_url, json=files_authentication)
+
     return {"info": "accepted"}, 202
 
 
