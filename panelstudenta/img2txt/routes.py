@@ -1,10 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from flask import render_template, url_for, flash, redirect, \
-    request, abort, session, Blueprint, send_file
+    request, abort, session, Blueprint, send_file, current_app
 from werkzeug.utils import secure_filename
 from panelstudenta.img2txt.forms import NewFileForm, FindFileForm
 from panelstudenta import db
+from panelstudenta.img2txt.utils import token_required
 from panelstudenta.models import File, User
 from panelstudenta.general_utils import check_confirmed
 from flask_login import current_user, login_required
@@ -13,6 +14,7 @@ import requests
 import base64
 import json
 from io import BytesIO
+from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from dotenv import load_dotenv, find_dotenv
 import threading
 
@@ -81,10 +83,20 @@ def user_files():
             abort(add_resp.status_code, add_resp.json())
 
         filename = secure_filename(form.file.data.filename)
-
         files = {'file': pdf_b64, "filename": filename}
         URL_img = os.environ.get("URL_IMG")+"/"+str(current_user.id)
-        requests.post(URL_img, data=json.dumps(files), headers=headers)
+
+        s = Serializer(current_app.config["SECRET_KEY"], 1800)
+        token = s.dumps({"username": current_user.username, "app": "img2txt"},
+                        salt=current_app.config['SECURITY_PASSWORD_SALT']).decode('utf-8')
+        files["token"] = token
+
+        try:
+            requests.post(URL_img, data=json.dumps(files), headers=headers)
+        except requests.exceptions.ConnectionError:
+            remove_url = URL_USER_FILES + "/delete_file/" + str(current_user.id) + "/" + str(filename)
+            requests.post(remove_url, json=files_authentication)
+            flash("Problem z połączeniem z aplikacją zczytującą tekst", "danger")
 
     page = request.args.get('page', 1, type=int)
     files_display = File.query.filter_by(owner=current_user).paginate(page=page, per_page=5)
@@ -92,25 +104,43 @@ def user_files():
 
 
 @img2txt.route("/imgtxt/files/img_receive/<filename>/<user_id>", methods=['POST'])
+@token_required("img2txt")
 def img_receive(filename, user_id):
     data = request.get_json()
+    user = User.query.get(int(user_id))
+    s = Serializer(current_app.config["SECRET_KEY"], 1800)
+    salt = current_app.config['SECURITY_PASSWORD_SALT']
 
     def call_nlp(**kwargs):
         params = kwargs.get('post_data')
         status_code = int(params['status_code'])
         if status_code < 400:
             params.pop("status_code", None)
-            requests.post(URL_NLP+"/preprocess/"+filename+"/"+user_id, json=params)
+            params.pop("token", None)
+            if user is not None:
+                token = s.dumps({"username": user.username, "app": "nlp"}, salt=salt).decode('utf-8')
+                params["token"] = token
+                try:
+                    requests.post(URL_NLP+"/preprocess/"+filename+"/"+user_id, json=params)
+                except requests.exceptions.ConnectionError:
+                    remove_url = URL_USER_FILES + "/delete_file/" + str(user_id) + "/" + str(filename)
+                    requests.post(remove_url, json=files_authentication)
+                    flash("Problem z połączeniem z aplikacją analizującą tekst", "danger")
+            else:
+                remove_url = URL_USER_FILES + "/delete_file/" + str(user_id) + "/" + str(filename)
+                requests.post(remove_url, json=files_authentication)
         else:
             remove_url = URL_USER_FILES + "/delete_file/" + str(user_id) + "/" + str(filename)
             requests.post(remove_url, json=files_authentication)
 
-    thread = threading.Thread(target=call_nlp, kwargs={'post_data': data})
-    thread.start()
+    with current_app.app_context():
+        thread = threading.Thread(target=call_nlp, kwargs={'post_data': data})
+        thread.start()
     return {"info": "accepted"}, 202
 
 
 @img2txt.route("/imgtxt/files/nlp_receive/<filename>/<user_id>", methods=['POST'])
+@token_required("nlp")
 def nlp_receive(filename, user_id):
     data = request.get_json()
     status_code = int(data["status_code"])
