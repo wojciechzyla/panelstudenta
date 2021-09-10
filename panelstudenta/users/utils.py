@@ -63,7 +63,7 @@ def save_profile_pic(form_picture, user_id):
     filename = random_hex + extention
 
     URL_USER_FILES = os.environ.get("URL_USER_FILES")
-    add_profile_url = URL_USER_FILES+"upload_profile/"+str(user_id)
+    add_profile_url = URL_USER_FILES+"/upload_profile/"+str(user_id)
 
     im_b64 = base64.b64encode(form_picture.read()).decode("utf8")
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}

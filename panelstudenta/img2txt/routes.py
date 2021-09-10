@@ -13,6 +13,8 @@ import base64
 import json
 from io import BytesIO
 from dotenv import load_dotenv, find_dotenv
+import threading
+
 load_dotenv(find_dotenv())
 
 
@@ -22,13 +24,14 @@ USER_FILES_LOGIN = os.environ.get("USER_FILES_LOGIN")
 USER_FILES_PASSWORD = os.environ.get("USER_FILES_PASSWORD")
 files_authentication = {"USER_LOGIN": USER_FILES_LOGIN,
                         "USER_PASSWORD": USER_FILES_PASSWORD}
+URL_NLP = os.environ.get("URL_NLP")
 
 
 @img2txt.route("/imgtxt/<file_name>", methods=['GET'])
 @check_confirmed
 @login_required
 def file(file_name):
-    get_file_url = URL_USER_FILES+"get/"+str(current_user.id)+"/"+file_name
+    get_file_url = URL_USER_FILES+"/get/"+str(current_user.id)+"/"+file_name
     headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
     get_file = requests.get(get_file_url, data=json.dumps(files_authentication), headers=headers)
@@ -45,7 +48,7 @@ def file(file_name):
 @login_required
 @check_confirmed
 def delete_file(file_id, filename):
-    remove_url = URL_USER_FILES + "delete_file/" + str(current_user.id) + "/" + str(filename)
+    remove_url = URL_USER_FILES + "/delete_file/" + str(current_user.id) + "/" + str(filename)
     remove_resp = requests.post(remove_url, json=files_authentication)
     if 400 <= remove_resp.status_code < 600:
         abort(remove_resp.status_code, remove_resp.json())
@@ -71,7 +74,7 @@ def user_files():
         files_authentication["filename"] = form.file.data.filename
         headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 
-        file_upload_url = URL_USER_FILES + "upload/" + str(current_user.id)
+        file_upload_url = URL_USER_FILES + "/upload/" + str(current_user.id)
         add_resp = requests.post(file_upload_url, data=json.dumps(files_authentication), headers=headers)
         if 400 <= add_resp.status_code < 500:
             abort(add_resp.status_code, add_resp.json())
@@ -79,20 +82,20 @@ def user_files():
         filename = form.file.data.filename
 
         files = {'file': pdf_b64, "filename": filename}
-        URL_img = os.environ.get("URL_IMG")
-        URL_nlp = os.environ.get("URL_NLP_PREP")
+        URL_img = os.environ.get("URL_IMG")+"/"
+        URL_nlp = URL_NLP+"/preprocess"
         try:
             response = requests.post(URL_img, data=json.dumps(files), headers=headers)
         except requests.exceptions.ConnectionError:
-            remove_url = URL_USER_FILES + "delete_file/" + str(current_user.id) + "/" + str(filename)
+            remove_url = URL_USER_FILES + "/delete_file/" + str(current_user.id) + "/" + str(filename)
             remove_resp = requests.post(remove_url, json=files_authentication)
-            flash("Problem z połączeniem", "danger")
+            flash("Problem z przetwarzaniem obrazów", "danger")
             return redirect(url_for("img2txt.user_files"))
 
         if response.status_code == 200:
             ocr_response = response.json()
         else:
-            remove_url = URL_USER_FILES + "delete_file/" + str(current_user.id) + "/" + str(filename)
+            remove_url = URL_USER_FILES + "/delete_file/" + str(current_user.id) + "/" + str(filename)
             remove_resp = requests.post(remove_url, json=files_authentication)
             abort(response.status_code, response.json())
 
@@ -105,13 +108,40 @@ def user_files():
             flash("Dodano nowy plik!", "success")
             return redirect(url_for("img2txt.user_files"))
         else:
-            remove_url = URL_USER_FILES + "delete_file/" + str(current_user.id) + "/" + str(filename)
+            remove_url = URL_USER_FILES + "/delete_file/" + str(current_user.id) + "/" + str(filename)
             remove_resp = requests.post(remove_url, json=files_authentication)
+            flash("Problem z analizą tekstu", "danger")
             abort(response.status_code, response.json())
 
     page = request.args.get('page', 1, type=int)
     files_display = File.query.filter_by(owner=current_user).paginate(page=page, per_page=5)
     return render_template("user_files.html", title="Wyszukiwarka plików", form=form, files_display=files_display)
+
+
+@img2txt.route("/imgtxt/files/img_receive/<filename>", methods=['POST'])
+@login_required
+@check_confirmed
+def img_receive(filename):
+    data = request.get_json()
+
+    def call_nlp(**kwargs):
+        params = kwargs.get('post_data')
+        requests.post(URL_NLP+"/preprocess/"+filename, json=params)
+
+    thread = threading.Thread(target=call_nlp, kwargs={'post_data': data})
+    thread.start()
+    return {"info": "accepted"}, 202
+
+
+@img2txt.route("/imgtxt/files/nlp_receive/<filename>", methods=['POST'])
+@login_required
+@check_confirmed
+def nlp_receive(filename):
+    data = request.get_json()
+    new_file = File(name=filename, owner=current_user, text=data)
+    db.session.add(new_file)
+    db.session.commit()
+    return {"info": "accepted"}, 202
 
 
 @img2txt.route("/imgtxt", methods=['GET', 'POST'])
@@ -122,7 +152,7 @@ def imgtxt():
     all_files = File.query.filter_by(owner=current_user).all()
     # Searching documents
     if search_form.validate_on_submit():
-        URL_nlp = os.environ.get("URL_NLP_RANK")
+        URL_nlp = URL_NLP+"/rank"
         query = search_form.searchbox.data
         documents_amount = search_form.amount.data if search_form.amount.data < len(all_files) else len(all_files)
         documents = []

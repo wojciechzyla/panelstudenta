@@ -32,7 +32,7 @@ class NewFileForm(FlaskForm):
             raise ValidationError("Nazwa pliku może zawierać tylko angielskie litery, cyfry "
                                   "oraz znak _.")
 
-        exists_url = URL_USER_FILES + "exists/" + str(current_user.id) + "/" + file.data.filename
+        exists_url = URL_USER_FILES + "/exists/" + str(current_user.id) + "/" + file.data.filename
         exists = requests.get(exists_url, json=files_authentication)
         file_exists = exists.json()["exists"]
         if file_exists:

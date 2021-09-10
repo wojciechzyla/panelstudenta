@@ -102,7 +102,7 @@ def account():
             picture_file = save_profile_pic(form.picture.data, current_user.id)
             if current_user.image_file != "default.png":
                 # Remove  previous profile picture
-                remove_url = URL_USER_FILES+"delete_profile_pic/"+str(current_user.id)+"/"+ str(current_user.image_file)
+                remove_url = URL_USER_FILES+"/delete_profile_pic/"+str(current_user.id)+"/"+ str(current_user.image_file)
                 remove_resp = requests.post(remove_url, json=files_authentication)
                 if 400 <= remove_resp.status_code < 600:
                     abort(remove_resp.status_code, remove_resp.json())
@@ -110,7 +110,7 @@ def account():
 
         if form.reset_picture.data and current_user.image_file != "default.png":
             # Reset profile picture
-            remove_url = URL_USER_FILES + "delete_profile_pic/" + str(current_user.id) + "/" + str(current_user.image_file)
+            remove_url = URL_USER_FILES + "/delete_profile_pic/" + str(current_user.id) + "/" + str(current_user.image_file)
             remove_resp = requests.post(remove_url, json=files_authentication)
             if 400 <= remove_resp.status_code < 600:
                 abort(remove_resp.status_code, remove_resp.json())
@@ -132,7 +132,7 @@ def account():
     if current_user.image_file == "default.png":
         image_file = url_for('static', filename='profile_pics/default.png')
     else:
-        get_profile_url = URL_USER_FILES + "get_profile/" + str(current_user.id) + "/" + str(current_user.image_file)
+        get_profile_url = URL_USER_FILES + "/get_profile/" + str(current_user.id) + "/" + str(current_user.image_file)
         get_profile = requests.get(get_profile_url, json=files_authentication)
         if 400 <= get_profile.status_code < 600:
             abort(get_profile.status_code, get_profile.json())
@@ -162,7 +162,7 @@ def delete_account(token):
         return redirect(url_for('users.home'))
     else:
         # remove files of this user
-        remove_user_url = URL_USER_FILES+"delete_user/"+str(current_user.id)
+        remove_user_url = URL_USER_FILES+"/delete_user/"+str(current_user.id)
         remove_user = requests.post(remove_user_url, json=files_authentication)
 
         if current_user.is_authenticated:
