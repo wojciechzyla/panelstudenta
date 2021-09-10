@@ -11,6 +11,7 @@ from flask_login import current_user, logout_user, login_required, login_user
 import os
 import datetime
 import requests
+import random
 import threading
 
 users = Blueprint('users', __name__, template_folder='templates')
@@ -43,7 +44,10 @@ def register():
     form_reg = RegistrationForm()
     if form_reg.validate_on_submit():
         hashed_pass = bcrypt.generate_password_hash(form_reg.password.data).decode('utf-8')
-        user = User(username=form_reg.username.data, email=form_reg.email.data, password=hashed_pass, confirmed=False)
+        user_id = random.randint(100, 1000000)
+        while User.query.get(user_id) is not None:
+            user_id = random.randint(100, 1000000)
+        user = User(id=user_id, username=form_reg.username.data, email=form_reg.email.data, password=hashed_pass, confirmed=False)
         db.session.add(user)
         db.session.commit()
         send_confirm_email(user)
