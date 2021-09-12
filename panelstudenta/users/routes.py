@@ -50,7 +50,11 @@ def register():
         user = User(id=user_id, username=form_reg.username.data, email=form_reg.email.data, password=hashed_pass, confirmed=False)
         db.session.add(user)
         db.session.commit()
-        send_confirm_email(user)
+
+        thread = threading.Thread(target=send_confirm_email, kwargs={'user': user, "app": current_app._get_current_object()})
+        thread.start()
+
+        #send_confirm_email(user)
         login_user(user)
         flash(f'Utworzono konto dla: {form_reg.username.data}! Na podany adres email za chwilę zostanie wysłana wiadomość z potwierdzeniem.', 'success')
         return redirect(url_for('users.unconfirmed'))
@@ -85,8 +89,9 @@ def confirm_email(token):
 @users.route('/resend')
 @login_required
 def resend_confirmation():
-    thread = threading.Thread(target=send_confirm_email, kwargs={'user': current_user})
+    thread = threading.Thread(target=send_confirm_email, kwargs={'user': current_user._get_current_object(), "app": current_app._get_current_object()})
     thread.start()
+    #send_confirm_email(current_user)
     flash('Nowy email z potwierdzeniem został wysłany', 'success')
     return redirect(url_for('users.unconfirmed'))
 
@@ -129,7 +134,11 @@ def account():
             current_user.confirmed = False
             current_user.confirmed_on = None
             current_user.email = form.email.data
-            send_confirm_email(current_user)
+
+            thread = threading.Thread(target=send_confirm_email, kwargs={'user': current_user._get_current_object(), "app": current_app._get_current_object()})
+            thread.start()
+
+            #send_confirm_email(current_user)
             flash("Aby móc dalej korzystać z konta proszę potwierdzić swój nowy adres email!", "info")
         db.session.commit()
         flash("Dane zostały zaktualizowane", "success")
@@ -153,7 +162,11 @@ def account():
 def request_delete():
     del_form = DeleteAccountForm()
     if del_form.validate_on_submit():
-        send_delete_email(current_user)
+
+        thread = threading.Thread(target=send_delete_email, kwargs={'user': current_user._get_current_object(), "app": current_app._get_current_object()})
+        thread.start()
+
+        #send_delete_email(current_user)
         flash("Jeśli podany adres email jest powiązany z kontem została na niego wysłana "
               "informacja dotycząca usuwania konta.", 'info')
         return redirect(url_for('users.account'))
@@ -190,7 +203,11 @@ def request_reset():
     form = RequestResetForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
-        send_reset_email(user)
+
+        thread = threading.Thread(target=send_reset_email, kwargs={'user': user, "app": current_app._get_current_object()})
+        thread.start()
+
+        #send_reset_email(user)
         flash("Jeśli podany adres email jest powiązany z kontem została na niego wysłana "
               "informacja dotycząca zresetowania hasła.", 'info')
         return redirect(url_for('users.home'))
