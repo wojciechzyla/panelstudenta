@@ -50,6 +50,8 @@ class RegistrationForm(FlaskForm):
         user = User.query.filter_by(email=email.data).first()
         if user:
             raise ValidationError("Email jest już zajęty")
+        if not re.fullmatch(r"[^@]+@[^@]+\.[^@]+", email.data):
+            raise ValidationError("Niepoprawny format email")
 
     def validate_password(self, password):
         if re.findall(r"[^a-zA-Z0-9_!@#$%^&*]", password.data):
@@ -59,12 +61,16 @@ class RegistrationForm(FlaskForm):
 
 class LoginForm(FlaskForm):
     email = StringField('Email',
-                        validators=[DataRequired(message='Pole wymagane'), Email(message='Niepoprawny format email')],
+                        validators=[DataRequired(message='Pole wymagane')],
                         render_kw={"placeholder": "Email"})
     password = PasswordField('Hasło', validators=[DataRequired(message='Pole wymagane')],
                              render_kw={"placeholder": "Hasło"})
     remember = BooleanField("Zapamiętaj")
     submit = SubmitField('Login')
+
+    def validate_email(self, email):
+        if not re.fullmatch(r"[^@]+@[^@]+\.[^@]+", email.data):
+            raise ValidationError("Niepoprawny format email")
 
 
 class UpdateAccountForm(FlaskForm):
@@ -100,15 +106,18 @@ class UpdateAccountForm(FlaskForm):
             user = User.query.filter_by(email=email.data).first()
             if user:
                 raise ValidationError("Email jest już zajęty")
-            if not re.fullmatch(r"[^@]+@[^@]+\.[^@]+", email.data):
-                raise ValidationError("Niepoprawny format email")
+        if not re.fullmatch(r"[^@]+@[^@]+\.[^@]+", email.data):
+            raise ValidationError("Niepoprawny format email")
 
 
 class RequestResetForm(FlaskForm):
-    email = StringField('Email', validators=[DataRequired(message='Pole wymagane'),
-                                             Email(message='Niepoprawny format email')],
+    email = StringField('Email', validators=[DataRequired(message='Pole wymagane')],
                         render_kw={"placeholder": "Email"})
     submit = SubmitField('Wyślij link z dalszymi instrukcjami ')
+
+    def validate_email(self, email):
+        if not re.fullmatch(r"[^@]+@[^@]+\.[^@]+", email.data):
+            raise ValidationError("Niepoprawny format email")
 
 
 class ResetPasswordForm(FlaskForm):
