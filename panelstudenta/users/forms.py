@@ -21,8 +21,7 @@ class RegistrationForm(FlaskForm):
                                                                            'musi zawierać się między '
                                                                            f'{MIN_USR} a {MAX_USR} znaków')],
                            render_kw={"placeholder": "Nazwa użytkownika"})
-    email = StringField('Email', validators=[DataRequired(message='Pole wymagane'),
-                                             Email(message='Niepoprawny format email')],
+    email = StringField('Email', validators=[DataRequired(message='Pole wymagane')],
                         render_kw={"placeholder": "Email"})
 
     password = PasswordField(f'Hasło (między {MIN_PASS} a {MAX_PASS} znaków)',
