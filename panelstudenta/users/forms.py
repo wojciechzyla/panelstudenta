@@ -75,8 +75,7 @@ class UpdateAccountForm(FlaskForm):
                                                                            f'{MIN_USR} a {MAX_USR} znaków')],
                            render_kw={"placeholder": "Nazwa użytkownika"})
 
-    email = StringField('Email', validators=[DataRequired(message='Pole wymagane'),
-                                             Email(message='Niepoprawny format email')],
+    email = StringField('Email', validators=[DataRequired(message='Pole wymagane')],
                         render_kw={"placeholder": "Email"})
 
     picture = FileField("Załaduj nowe zdjęcie profilowe", validators=[FileAllowed(['jpg', 'png'],
@@ -101,6 +100,8 @@ class UpdateAccountForm(FlaskForm):
             user = User.query.filter_by(email=email.data).first()
             if user:
                 raise ValidationError("Email jest już zajęty")
+            if not re.fullmatch(r"[^@]+@[^@]+\.[^@]+", email.data):
+                raise ValidationError("Niepoprawny format email")
 
 
 class RequestResetForm(FlaskForm):
