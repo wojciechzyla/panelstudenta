@@ -5,11 +5,9 @@ from flask_wtf.file import FileField, FileAllowed, FileSize
 from wtforms import StringField, SubmitField, IntegerField
 from wtforms.validators import DataRequired, ValidationError
 from flask_login import current_user
-from flask import current_app
 import requests
 import os
 import re
-import json
 
 URL_USER_FILES = os.environ.get("URL_USER_FILES")
 USER_FILES_LOGIN = os.environ.get("USER_FILES_LOGIN")
@@ -32,7 +30,7 @@ class NewFileForm(FlaskForm):
             raise ValidationError("Nazwa pliku może zawierać tylko angielskie litery, cyfry "
                                   "oraz znak _.")
 
-        exists_url = URL_USER_FILES + "exists/" + str(current_user.id) + "/" + file.data.filename
+        exists_url = URL_USER_FILES + "/exists/" + str(current_user.id) + "/" + file.data.filename
         exists = requests.get(exists_url, json=files_authentication)
         file_exists = exists.json()["exists"]
         if file_exists:

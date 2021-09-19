@@ -11,6 +11,8 @@ from flask_login import current_user, logout_user, login_required, login_user
 import os
 import datetime
 import requests
+import random
+import threading
 
 users = Blueprint('users', __name__, template_folder='templates')
 URL_USER_FILES = os.environ.get("URL_USER_FILES")
@@ -42,12 +44,19 @@ def register():
     form_reg = RegistrationForm()
     if form_reg.validate_on_submit():
         hashed_pass = bcrypt.generate_password_hash(form_reg.password.data).decode('utf-8')
-        user = User(username=form_reg.username.data, email=form_reg.email.data, password=hashed_pass, confirmed=False)
+        user_id = random.randint(100, 1000000)
+        while User.query.get(user_id) is not None:
+            user_id = random.randint(100, 1000000)
+        user = User(id=user_id, username=form_reg.username.data, email=form_reg.email.data, password=hashed_pass, confirmed=False)
         db.session.add(user)
         db.session.commit()
-        send_confirm_email(user)
+
+        thread = threading.Thread(target=send_confirm_email, kwargs={'user': user, "app": current_app._get_current_object()})
+        thread.start()
+
+        #send_confirm_email(user)
         login_user(user)
-        flash(f'Utworzono konto dla: {form_reg.username.data}! Na podany adres email została wysłana wiadomość z potwierdzeniem', 'success')
+        flash(f'Utworzono konto dla: {form_reg.username.data}! Na podany adres email za chwilę zostanie wysłana wiadomość z potwierdzeniem.', 'success')
         return redirect(url_for('users.unconfirmed'))
     return render_template("registration.html", form_reg=form_reg, title="Rejestracja")
 
@@ -80,7 +89,9 @@ def confirm_email(token):
 @users.route('/resend')
 @login_required
 def resend_confirmation():
-    send_confirm_email(current_user)
+    thread = threading.Thread(target=send_confirm_email, kwargs={'user': current_user._get_current_object(), "app": current_app._get_current_object()})
+    thread.start()
+    #send_confirm_email(current_user)
     flash('Nowy email z potwierdzeniem został wysłany', 'success')
     return redirect(url_for('users.unconfirmed'))
 
@@ -102,7 +113,7 @@ def account():
             picture_file = save_profile_pic(form.picture.data, current_user.id)
             if current_user.image_file != "default.png":
                 # Remove  previous profile picture
-                remove_url = URL_USER_FILES+"delete_profile_pic/"+str(current_user.id)+"/"+ str(current_user.image_file)
+                remove_url = URL_USER_FILES+"/delete_profile_pic/"+str(current_user.id)+"/"+ str(current_user.image_file)
                 remove_resp = requests.post(remove_url, json=files_authentication)
                 if 400 <= remove_resp.status_code < 600:
                     abort(remove_resp.status_code, remove_resp.json())
@@ -110,7 +121,7 @@ def account():
 
         if form.reset_picture.data and current_user.image_file != "default.png":
             # Reset profile picture
-            remove_url = URL_USER_FILES + "delete_profile_pic/" + str(current_user.id) + "/" + str(current_user.image_file)
+            remove_url = URL_USER_FILES + "/delete_profile_pic/" + str(current_user.id) + "/" + str(current_user.image_file)
             remove_resp = requests.post(remove_url, json=files_authentication)
             if 400 <= remove_resp.status_code < 600:
                 abort(remove_resp.status_code, remove_resp.json())
@@ -123,7 +134,11 @@ def account():
             current_user.confirmed = False
             current_user.confirmed_on = None
             current_user.email = form.email.data
-            send_confirm_email(current_user)
+
+            thread = threading.Thread(target=send_confirm_email, kwargs={'user': current_user._get_current_object(), "app": current_app._get_current_object()})
+            thread.start()
+
+            #send_confirm_email(current_user)
             flash("Aby móc dalej korzystać z konta proszę potwierdzić swój nowy adres email!", "info")
         db.session.commit()
         flash("Dane zostały zaktualizowane", "success")
@@ -132,7 +147,7 @@ def account():
     if current_user.image_file == "default.png":
         image_file = url_for('static', filename='profile_pics/default.png')
     else:
-        get_profile_url = URL_USER_FILES + "get_profile/" + str(current_user.id) + "/" + str(current_user.image_file)
+        get_profile_url = URL_USER_FILES + "/get_profile/" + str(current_user.id) + "/" + str(current_user.image_file)
         get_profile = requests.get(get_profile_url, json=files_authentication)
         if 400 <= get_profile.status_code < 600:
             abort(get_profile.status_code, get_profile.json())
@@ -147,7 +162,11 @@ def account():
 def request_delete():
     del_form = DeleteAccountForm()
     if del_form.validate_on_submit():
-        send_delete_email(current_user)
+
+        thread = threading.Thread(target=send_delete_email, kwargs={'user': current_user._get_current_object(), "app": current_app._get_current_object()})
+        thread.start()
+
+        #send_delete_email(current_user)
         flash("Jeśli podany adres email jest powiązany z kontem została na niego wysłana "
               "informacja dotycząca usuwania konta.", 'info')
         return redirect(url_for('users.account'))
@@ -162,7 +181,7 @@ def delete_account(token):
         return redirect(url_for('users.home'))
     else:
         # remove files of this user
-        remove_user_url = URL_USER_FILES+"delete_user/"+str(current_user.id)
+        remove_user_url = URL_USER_FILES+"/delete_user/"+str(current_user.id)
         remove_user = requests.post(remove_user_url, json=files_authentication)
 
         if current_user.is_authenticated:
@@ -184,7 +203,11 @@ def request_reset():
     form = RequestResetForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
-        send_reset_email(user)
+
+        thread = threading.Thread(target=send_reset_email, kwargs={'user': user, "app": current_app._get_current_object()})
+        thread.start()
+
+        #send_reset_email(user)
         flash("Jeśli podany adres email jest powiązany z kontem została na niego wysłana "
               "informacja dotycząca zresetowania hasła.", 'info')
         return redirect(url_for('users.home'))

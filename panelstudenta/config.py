@@ -14,3 +14,4 @@ class Config:
     MAIL_USERNAME = os.environ.get('EMAIL_USER')
     MAIL_PASSWORD = os.environ.get('EMAIL_PASS')
     SECURITY_PASSWORD_SALT = os.environ.get('SECURITY_PASSWORD_SALT')
+    SERVER_NAME = os.environ.get('SERVER_NAME')
