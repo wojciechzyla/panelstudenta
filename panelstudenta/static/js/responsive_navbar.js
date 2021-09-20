@@ -1,8 +1,7 @@
 $(document).ready(function() {
-    let defaultHeaderHeight = $(":root").css("--header-height");
-    let len = defaultHeaderHeight.length;
-    console.log(len);
-    defaultHeaderHeight = parseInt(defaultHeaderHeight.substring(0,2));
+    let defaultHeaderHeight = 60;
+     $(".header-own").css("height", defaultHeaderHeight);
+     $("main").css("margin-top", defaultHeaderHeight);
 
     $(".navbar-button").on("click", function(){
         const smallMenu= $(".small-menu-default");
