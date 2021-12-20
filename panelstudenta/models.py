@@ -23,8 +23,7 @@ class User(db.Model, UserMixin):
     confirmed = db.Column(db.Boolean, nullable=False, default=False)
     confirmed_on = db.Column(db.DateTime, nullable=True)
 
-    def __init__(self, id, username, email, password, confirmed, confirmed_on=None):
-        self.id = id
+    def __init__(self, username, email, password, confirmed, confirmed_on=None):
         self.username = username
         self.email = email
         self.password = password

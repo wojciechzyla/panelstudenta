@@ -3,34 +3,32 @@
 from panelstudenta.models import User, File
 from panelstudenta import db
 from flask import current_app
-from flask_login import logout_user
 import datetime
 import os
-import requests
-
-
-URL_USER_FILES = os.environ.get("URL_USER_FILES")
-USER_FILES_LOGIN = os.environ.get("USER_FILES_LOGIN")
-USER_FILES_PASSWORD = os.environ.get("USER_FILES_PASSWORD")
-files_authentication = {"USER_LOGIN": USER_FILES_LOGIN, "USER_PASSWORD": USER_FILES_PASSWORD}
+import shutil
 
 
 def delete_unconfirmed(time_to_delete):
+    """
+    Function used to delete unconfirmed users
+    :param time_to_delete: Users who didn't confirm their
+    account since this time given in minutes will have their accounts deleted
+    """
     unconfirmed = User.query.filter_by(confirmed=False)
     date_now = datetime.datetime.now()
 
     for user in unconfirmed:
-        time_delta = (date_now - user.registered_on).total_seconds()/60
+        time_delta = (date_now - user.registered_on).total_seconds() / 60
         if time_delta > time_to_delete:
-            # remove files of this user
-            remove_user_url = URL_USER_FILES + "delete_user/" + str(user.id)
-            with current_app.test_request_context():
-                requests.post(remove_user_url, json=files_authentication)
-
-            if user.is_authenticated:
-                logout_user()
-
+            dir_to_files = os.path.join(current_app.root_path, "static/users_files", user.username)
+            # remove files directory of this user
+            shutil.rmtree(dir_to_files)
+            if user.image_file != "default.png":
+                # remove profile picture of this user
+                path_to_profile_pic = os.path.join(current_app.root_path, "static/profile_pics", user.image_file)
+                os.remove(path_to_profile_pic)
             files_to_del = File.query.filter_by(owner=user).all()
+            # remove files paths from database
             for f in files_to_del:
                 db.session.delete(f)
             db.session.delete(user)

@@ -6,6 +6,9 @@ from flask import flash, redirect, url_for
 
 
 def check_confirmed(func):
+    """
+    Function to check if user confirmed account
+    """
     @wraps(func)
     def decorated_function(*args, **kwargs):
         if current_user.confirmed is False:

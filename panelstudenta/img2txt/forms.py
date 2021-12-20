@@ -1,19 +1,13 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from flask import current_app
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileSize
 from wtforms import StringField, SubmitField, IntegerField
 from wtforms.validators import DataRequired, ValidationError
 from flask_login import current_user
-import requests
 import os
 import re
-
-URL_USER_FILES = os.environ.get("URL_USER_FILES")
-USER_FILES_LOGIN = os.environ.get("USER_FILES_LOGIN")
-USER_FILES_PASSWORD = os.environ.get("USER_FILES_PASSWORD")
-files_authentication = {"USER_LOGIN": USER_FILES_LOGIN,
-                        "USER_PASSWORD": USER_FILES_PASSWORD}
 
 
 class NewFileForm(FlaskForm):
@@ -29,11 +23,9 @@ class NewFileForm(FlaskForm):
         if re.findall(r"[^a-zA-Z0-9_]", filename):
             raise ValidationError("Nazwa pliku może zawierać tylko angielskie litery, cyfry "
                                   "oraz znak _.")
-
-        exists_url = URL_USER_FILES + "/exists/" + str(current_user.id) + "/" + file.data.filename
-        exists = requests.get(exists_url, json=files_authentication)
-        file_exists = exists.json()["exists"]
-        if file_exists:
+        filepath = os.path.join(current_app.root_path, "static/users_files", current_user.username, file.data.filename)
+        path_exists = os.path.exists(filepath)
+        if path_exists:
             raise ValidationError("Już istnieje plik o takiej samej nazwie.")
 
 
