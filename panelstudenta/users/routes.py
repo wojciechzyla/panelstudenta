@@ -48,6 +48,11 @@ def register():
     if form_reg.validate_on_submit():
         hashed_pass = bcrypt.generate_password_hash(form_reg.password.data).decode('utf-8')
         user = User(username=form_reg.username.data, email=form_reg.email.data, password=hashed_pass, confirmed=False)
+
+        if not os.path.exists(os.path.join(current_app.root_path, "static/users_files", form_reg.username.data)):
+            # create directory for uploaded files
+            os.makedirs(os.path.join(current_app.root_path, "static/users_files", form_reg.username.data))
+
         db.session.add(user)
         db.session.commit()
 
