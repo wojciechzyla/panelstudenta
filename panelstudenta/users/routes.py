@@ -145,7 +145,7 @@ def account():
         os.rename(path_to_user_files, path_to_new_user_files)
         current_user.username = form.username.data
 
-        # confirm new email
+        # Confirm new email
         if form.email.data != current_user.email:
             current_user.confirmed = False
             current_user.confirmed_on = None
@@ -203,6 +203,7 @@ def delete_account(token):
 
         # remove files paths from database
         files_to_del = File.query.filter_by(owner=user).all()
+        # remove files path from database
         for f in files_to_del:
             db.session.delete(f)
         db.session.delete(user)
