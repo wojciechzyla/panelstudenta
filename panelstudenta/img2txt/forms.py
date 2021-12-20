@@ -1,14 +1,14 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from flask import current_app
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileSize
 from wtforms import StringField, SubmitField, IntegerField
 from wtforms.validators import DataRequired, ValidationError
 from flask_login import current_user
-from panelstudenta.models import File
-from flask import current_app
 import os
 import re
+
 
 class NewFileForm(FlaskForm):
     file = FileField("Dodaj nowy plik", validators=[FileAllowed(['pdf', 'png', 'jpg', 'jpeg'],

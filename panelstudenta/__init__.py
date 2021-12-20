@@ -28,8 +28,10 @@ def create_app(config_class=Config):
 
     from panelstudenta.users.routes import users
     from panelstudenta.img2txt.routes import img2txt
+    from panelstudenta.accounting.routes import accounting
     app.register_blueprint(users)
     app.register_blueprint(img2txt)
+    app.register_blueprint(accounting)
 
     return app
 

@@ -1,5 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+import shutil
 from flask import render_template, url_for, flash, redirect, Blueprint, request, current_app
 from panelstudenta.users.forms import RegistrationForm, UpdateAccountForm, \
     RequestResetForm, ResetPasswordForm, ChangePasswordForm, DeleteAccountForm, LoginForm
@@ -9,8 +10,8 @@ from panelstudenta import db, bcrypt
 from panelstudenta.models import User, File
 from flask_login import current_user, logout_user, login_required, login_user
 import os
-import shutil
 import datetime
+import threading
 
 users = Blueprint('users', __name__, template_folder='templates')
 
@@ -47,14 +48,20 @@ def register():
     if form_reg.validate_on_submit():
         hashed_pass = bcrypt.generate_password_hash(form_reg.password.data).decode('utf-8')
         user = User(username=form_reg.username.data, email=form_reg.email.data, password=hashed_pass, confirmed=False)
+
         if not os.path.exists(os.path.join(current_app.root_path, "static/users_files", form_reg.username.data)):
             # create directory for uploaded files
             os.makedirs(os.path.join(current_app.root_path, "static/users_files", form_reg.username.data))
+
         db.session.add(user)
         db.session.commit()
-        send_confirm_email(user)
+
+        # Send confirmation email on different thread.
+        thread = threading.Thread(target=send_confirm_email, kwargs={'user': user, "app": current_app._get_current_object()})
+        thread.start()
+
         login_user(user)
-        flash(f'Utworzono konto dla: {form_reg.username.data}! Na podany adres email została wysłana wiadomość z potwierdzeniem', 'success')
+        flash(f'Utworzono konto dla: {form_reg.username.data}! Na podany adres email za chwilę zostanie wysłana wiadomość z potwierdzeniem.', 'success')
         return redirect(url_for('users.unconfirmed'))
     return render_template("registration.html", form_reg=form_reg, title="Rejestracja")
 
@@ -74,9 +81,9 @@ def unconfirmed():
 @login_required
 def confirm_email(token):
     """
-    Confirm user's email. If token is expired or user is already
-    confirmed, appropriate message is flashed.
-    """
+   Confirm user's email. If token is expired or invalid or user is already
+   confirmed, appropriate message is flashed.
+   """
     user = User.verify_token(token)
     if user is None:
         flash("Link aktywujący konto wygasł lub jest nieważny", "warning")
@@ -97,7 +104,8 @@ def resend_confirmation():
     """
     Resend link to confirm email.
     """
-    send_confirm_email(current_user)
+    thread = threading.Thread(target=send_confirm_email, kwargs={'user': current_user._get_current_object(), "app": current_app._get_current_object()})
+    thread.start()
     flash('Nowy email z potwierdzeniem został wysłany', 'success')
     return redirect(url_for('users.unconfirmed'))
 
@@ -142,7 +150,10 @@ def account():
             current_user.confirmed = False
             current_user.confirmed_on = None
             current_user.email = form.email.data
-            send_confirm_email(current_user)
+
+            thread = threading.Thread(target=send_confirm_email, kwargs={'user': current_user._get_current_object(), "app": current_app._get_current_object()})
+            thread.start()
+
             flash("Aby móc dalej korzystać z konta proszę potwierdzić swój nowy adres email!", "info")
         db.session.commit()
         flash("Dane zostały zaktualizowane", "success")
@@ -161,8 +172,8 @@ def request_delete():
     """
     del_form = DeleteAccountForm()
     if del_form.validate_on_submit():
-        # Send delete email and redirect to home page
-        send_delete_email(current_user)
+        thread = threading.Thread(target=send_delete_email, kwargs={'user': current_user._get_current_object(), "app": current_app._get_current_object()})
+        thread.start()
         flash("Jeśli podany adres email jest powiązany z kontem została na niego wysłana "
               "informacja dotycząca usuwania konta.", 'info')
         return redirect(url_for('users.account'))
@@ -189,6 +200,8 @@ def delete_account(token):
             # remove profile picture of this user
             path_to_profile_pic = os.path.join(current_app.root_path, "static/profile_pics", user.image_file)
             os.remove(path_to_profile_pic)
+
+        # remove files paths from database
         files_to_del = File.query.filter_by(owner=user).all()
         # remove files path from database
         for f in files_to_del:
@@ -209,7 +222,8 @@ def request_reset():
     form = RequestResetForm()
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
-        send_reset_email(user)
+        thread = threading.Thread(target=send_reset_email, kwargs={'user': user, "app": current_app._get_current_object()})
+        thread.start()
         flash("Jeśli podany adres email jest powiązany z kontem została na niego wysłana "
               "informacja dotycząca zresetowania hasła.", 'info')
         return redirect(url_for('users.home'))

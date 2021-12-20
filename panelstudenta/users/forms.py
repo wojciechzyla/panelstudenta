@@ -8,7 +8,7 @@ from panelstudenta.models import User
 from flask_login import current_user
 import re
 
-MIN_PASS = 11
+MIN_PASS = 8
 MAX_PASS = 50
 MIN_USR = 5
 MAX_USR = 20
@@ -17,7 +17,7 @@ MAX_USR = 20
 class RegistrationForm(FlaskForm):
     username = StringField('Nazwa użytkownika',
                            validators=[DataRequired(message='Pole wymagane'), Length(min=MIN_USR, max=MAX_USR,
-                                                                                     message=f'Nazwa uzytkownika musi zawierać się między {MIN_USR} a {MAX_USR} znaków')],
+                           message=f'Nazwa uzytkownika musi zawierać się między {MIN_USR} a {MAX_USR} znaków')],
                            render_kw={"placeholder": "Nazwa użytkownika"})
 
     email = StringField('Email', validators=[DataRequired(message='Pole wymagane'),

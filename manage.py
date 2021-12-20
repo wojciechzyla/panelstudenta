@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 from flask.cli import FlaskGroup
 from panelstudenta import create_app, db
 from panelstudenta.delete_unconfirmed import delete_unconfirmed
