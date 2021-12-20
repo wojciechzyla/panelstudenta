@@ -17,6 +17,10 @@ users = Blueprint('users', __name__, template_folder='templates')
 
 @users.route("/", methods=['GET', 'POST'])
 def home():
+    """
+    Return home page. This page is different for logged and
+    not logged in users.
+    """
     if current_user.is_authenticated:
         return render_template("home_logged.html")
     form_log = LoginForm()
@@ -33,6 +37,10 @@ def home():
 
 @users.route("/register", methods=['GET', 'POST'])
 def register():
+    """
+    Endpoint for registering new users. If user is already logged in he is
+    redirected to home page.
+    """
     if current_user.is_authenticated:
         return redirect(url_for('users.home'))
     form_reg = RegistrationForm()
@@ -40,6 +48,7 @@ def register():
         hashed_pass = bcrypt.generate_password_hash(form_reg.password.data).decode('utf-8')
         user = User(username=form_reg.username.data, email=form_reg.email.data, password=hashed_pass, confirmed=False)
         if not os.path.exists(os.path.join(current_app.root_path, "static/users_files", form_reg.username.data)):
+            # create directory for uploaded files
             os.makedirs(os.path.join(current_app.root_path, "static/users_files", form_reg.username.data))
         db.session.add(user)
         db.session.commit()
@@ -53,15 +62,21 @@ def register():
 @users.route('/unconfirmed')
 @login_required
 def unconfirmed():
+    """
+    If users email is not confirmed he is shown this page.
+    """
     if current_user.confirmed:
         return redirect('users.home')
-    #flash('Proszę potwierdzić swój adres email!', 'warning')
     return render_template('unconfirmed.html')
 
 
 @users.route('/confirm/<token>')
 @login_required
 def confirm_email(token):
+    """
+    Confirm user's email. If token is expired or user is already
+    confirmed, appropriate message is flashed.
+    """
     user = User.verify_token(token)
     if user is None:
         flash("Link aktywujący konto wygasł lub jest nieważny", "warning")
@@ -79,6 +94,9 @@ def confirm_email(token):
 @users.route('/resend')
 @login_required
 def resend_confirmation():
+    """
+    Resend link to confirm email.
+    """
     send_confirm_email(current_user)
     flash('Nowy email z potwierdzeniem został wysłany', 'success')
     return redirect(url_for('users.unconfirmed'))
@@ -94,11 +112,15 @@ def logout():
 @login_required
 @check_confirmed
 def account():
+    """
+    Page to display and update account details.
+    """
     form = UpdateAccountForm()
 
     if form.validate_on_submit():
         path_to_profile_pic = os.path.join(current_app.root_path, "static/profile_pics", current_user.image_file)
         if form.picture.data:
+            # save new profile image
             picture_file = save_profile_pic(form.picture.data)
             if current_user.image_file != "default.png":
                 # Remove  previous profile picture
@@ -108,12 +130,14 @@ def account():
             # Reset profile picture
             os.remove(path_to_profile_pic)
             current_user.image_file = "default.png"
+
+        # Change user's name and name of user files directory.
         path_to_user_files = os.path.join(current_app.root_path, "static/users_files", current_user.username)
         path_to_new_user_files = os.path.join(current_app.root_path, "static/users_files", form.username.data)
         os.rename(path_to_user_files, path_to_new_user_files)
         current_user.username = form.username.data
 
-        # confirm new email
+        # Confirm new email
         if form.email.data != current_user.email:
             current_user.confirmed = False
             current_user.confirmed_on = None
@@ -132,8 +156,12 @@ def account():
 @login_required
 @check_confirmed
 def request_delete():
+    """
+    Page to request account deletion.
+    """
     del_form = DeleteAccountForm()
     if del_form.validate_on_submit():
+        # Send delete email and redirect to home page
         send_delete_email(current_user)
         flash("Jeśli podany adres email jest powiązany z kontem została na niego wysłana "
               "informacja dotycząca usuwania konta.", 'info')
@@ -143,21 +171,26 @@ def request_delete():
 
 @users.route("/account/<token>", methods=['GET', 'POST'])
 def delete_account(token):
+    """
+    Delete user's account.
+    """
     user = User.verify_token(token)
     if user is None:
+        # If token is expired or invalid flash information and redirect to home page.
         flash("Link usuwający konto wygasł lub jest nieważny", "warning")
         return redirect(url_for('users.home'))
     else:
         dir_to_files = os.path.join(current_app.root_path, "static/users_files", user.username)
         if current_user.is_authenticated:
             logout_user()
-        # remove files of this user
+        # remove files directory of this user
         shutil.rmtree(dir_to_files)
         if user.image_file != "default.png":
             # remove profile picture of this user
             path_to_profile_pic = os.path.join(current_app.root_path, "static/profile_pics", user.image_file)
             os.remove(path_to_profile_pic)
         files_to_del = File.query.filter_by(owner=user).all()
+        # remove files path from database
         for f in files_to_del:
             db.session.delete(f)
         db.session.delete(user)
@@ -168,6 +201,9 @@ def delete_account(token):
 
 @users.route("/reset_password", methods=['GET', 'POST'])
 def request_reset():
+    """
+    Page for sending link to reset password for not logged in users.
+    """
     if current_user.is_authenticated:
         return render_template("home_logged.html")
     form = RequestResetForm()
@@ -182,10 +218,14 @@ def request_reset():
 
 @users.route("/reset_password/<token>", methods=['GET', 'POST'])
 def token_reset(token):
+    """
+    Reset password.
+    """
     if current_user.is_authenticated:
         return render_template("home_logged.html")
     user = User.verify_token(token)
     if user is None:
+        # If token is expired or invalid flash information and redirect to home page.
         flash("Link resetujący hasło wygasł lub jest nieważny", "warning")
         return redirect(url_for('users.request_reset'))
     else:
@@ -203,6 +243,9 @@ def token_reset(token):
 @login_required
 @check_confirmed
 def change_password():
+    """
+    Page for changing password for logged in users.
+    """
     form = ChangePasswordForm()
     if form.validate_on_submit():
         if bcrypt.check_password_hash(current_user.password, form.old_password.data):

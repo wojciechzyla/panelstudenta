@@ -21,6 +21,9 @@ img2txt = Blueprint('img2txt', __name__, template_folder='templates')
 @check_confirmed
 @login_required
 def file(file_name):
+    """
+    Display requested file
+    """
     filepath = os.path.join(current_app.root_path, "static/users_files", current_user.username)
     if os.path.exists(safe_join(filepath, file_name)):
         return send_from_directory(filepath, file_name)
@@ -32,6 +35,9 @@ def file(file_name):
 @login_required
 @check_confirmed
 def delete_file(file_id):
+    """
+    Remove user's file.
+    """
     file_to_delete = File.query.get_or_404(file_id)
     path_to_file = os.path.join(current_app.root_path, "static/users_files", current_user.username, file_to_delete.name)
     os.remove(path_to_file)
@@ -50,6 +56,7 @@ def user_files():
     # Adding new img2txt
     if form.validate_on_submit():
         if not os.path.exists(os.path.join(current_app.root_path, "static/users_files", current_user.username)):
+            # Create file directory for user.
             os.makedirs(os.path.join(current_app.root_path, "static/users_files", current_user.username))
         file_path = os.path.join(current_app.root_path, "static/users_files", current_user.username,
                                  form.file.data.filename)

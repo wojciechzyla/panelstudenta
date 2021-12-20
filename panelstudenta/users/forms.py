@@ -15,12 +15,11 @@ MAX_USR = 20
 
 
 class RegistrationForm(FlaskForm):
-    username = StringField('Nazwa użytkownika', validators=[DataRequired(message='Pole wymagane'),
-                                                            Length(min=MIN_USR, max=MAX_USR,
-                                                                   message='Nazwa uzytkownika '
-                                                                           'musi zawierać się między '
-                                                                           f'{MIN_USR} a {MAX_USR} znaków')],
+    username = StringField('Nazwa użytkownika',
+                           validators=[DataRequired(message='Pole wymagane'), Length(min=MIN_USR, max=MAX_USR,
+                                                                                     message=f'Nazwa uzytkownika musi zawierać się między {MIN_USR} a {MAX_USR} znaków')],
                            render_kw={"placeholder": "Nazwa użytkownika"})
+
     email = StringField('Email', validators=[DataRequired(message='Pole wymagane'),
                                              Email(message='Niepoprawny format email')],
                         render_kw={"placeholder": "Email"})
@@ -32,9 +31,10 @@ class RegistrationForm(FlaskForm):
                              render_kw={"placeholder": f'Hasło (między {MIN_PASS} a {MAX_PASS} znaków)'})
 
     confirm_password = PasswordField('Powtórz hasło', validators=[DataRequired(message='Pole wymagane'),
-                                                                    EqualTo('password', message='Hasła '
-                                                                                                'muszą się zgadzać')],
+                                                                  EqualTo('password', message='Hasła '
+                                                                                              'muszą się zgadzać')],
                                      render_kw={"placeholder": "Powtórz hasło"})
+
     submit = SubmitField('Sign Up')
 
     def validate_username(self, username):
@@ -69,9 +69,7 @@ class LoginForm(FlaskForm):
 
 class UpdateAccountForm(FlaskForm):
     username = StringField('Nazwa użytkownika', validators=[DataRequired(message='Pole wymagane'),
-                                                            Length(min=MIN_USR, max=MAX_USR,
-                                                                   message='Nazwa uzytkownika '
-                                                                           'musi zawierać się między '
+                            Length(min=MIN_USR, max=MAX_USR, message='Nazwa uzytkownika musi zawierać się między '
                                                                            f'{MIN_USR} a {MAX_USR} znaków')],
                            render_kw={"placeholder": "Nazwa użytkownika"})
 
@@ -80,9 +78,9 @@ class UpdateAccountForm(FlaskForm):
                         render_kw={"placeholder": "Email"})
 
     picture = FileField("Załaduj nowe zdjęcie profilowe", validators=[FileAllowed(['jpg', 'png'],
-                                                                             message="Tylko rozszerzenia jpg i png"),
-                                                                 FileSize(max_size=200 * 1000,
-                                                                          message="Plik może mieć maksymalnie 200KB")])
+                                                                                  message="Tylko rozszerzenia jpg i png"),
+                                                                      FileSize(max_size=200 * 1000,
+                                                                               message="Plik może mieć maksymalnie 200KB")])
     reset_picture = BooleanField("Usuń zdjęcie profilowe")
 
     submit = SubmitField('Zaktualizuj')
@@ -133,8 +131,8 @@ class ChangePasswordForm(FlaskForm):
                              render_kw={"placeholder": "Nowe hasło"})
 
     confirm_password = PasswordField('Powtórz nowe hasło', validators=[DataRequired(message='Pole wymagane'),
-                                                                         EqualTo('password', message='Hasła '
-                                                                                                     'muszą się zgadzać')],
+                                                                       EqualTo('password', message='Hasła '
+                                                                                                   'muszą się zgadzać')],
                                      render_kw={"placeholder": "Powtórz nowe hasło"})
     submit = SubmitField('Zmień hasło')
 
