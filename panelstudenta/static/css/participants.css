@@ -1,0 +1,36 @@
+#participants-background{
+    position: fixed;
+    display: none;
+    width: 100%;
+    height: 100vh;
+    top: 0;
+    background-color: #000;
+    opacity: 0.5;
+    z-index: 2000;
+}
+
+#expenditures{
+    position: fixed;
+    display: none;
+    background-color: #4e4952;
+    border-radius: 20px;
+    z-index: 5000;
+    height: 50vh;
+    top: 80px;
+    left: 0;
+    right: 0;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+#expenditures-title{
+    font-size: 18px;
+    color: #e0dddc;
+}
+
+#expenditures-content{
+    border-radius: 10px;
+    background-color: #665f6b;
+    height: 40px;
+    overflow: scroll;
+}

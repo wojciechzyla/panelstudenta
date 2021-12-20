@@ -17,31 +17,6 @@ function loadGroups(accountingUrl, userId){
                 </div>`);
             }
 
-            $("button.btn.btn-danger.btn-sm.ml-1.delete-button").on("click", function(e){
-                let groupName = $(this).data("groupname");
-                let groupId = $(this).data("groupid");
-                let str_to_add = "Na pewno chcesz usunąć grupę "+groupName+" ?";
-                $('#deleteModalLabel').html(str_to_add);
-                $("#deleteGroupButton").attr("groupid", groupId);
-
-                $("#deleteGroupButton").on("click", function(e){
-                    console.log("usuwam");
-                    let groupId = $(this).attr("groupid");
-                    let deleteUrl = accountingUrl+"/group/"+groupId;
-                    $.ajax({
-                        url: deleteUrl,
-                        type: 'DELETE',
-                        success: () => {
-                            console.log("group was deleted");
-                            loadGroups(accountingUrl, userId)
-                        },
-                        error: () => {
-                            console.log("group was not deleted");
-                        }
-                    });
-                });
-            });
-
             $("#userGroups").append(`<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
             <div class="modal-dialog" role="document">
               <div class="modal-content modal-content-own">
@@ -87,13 +62,40 @@ $(document).ready(function (){
             dataType: "json",
             contentType: "application/json",
             data: dataJson,
-            success: (resp) => {
+            success: () => {
                 console.log("dodano grupe");
                 loadGroups(accountingUrl, userId);
             },
-            error: (resp) => {
+            error: () => {
                 console.log("problem z dodaniem grupy");
             }
-        })
+        });
+    });
+
+    $("body").on("click", function(e){
+        if ($(e.target).hasClass('delete-button')){
+            let groupName = $(e.target).data("groupname");
+            let groupId = $(e.target).data("groupid");
+            let str_to_add = "Na pewno chcesz usunąć grupę "+groupName+" ?";
+            $('#deleteModalLabel').html(str_to_add);
+            $("#deleteGroupButton").attr("groupid", groupId);
+
+            $("#deleteGroupButton").on("click", function(e){
+                console.log("usuwam");
+                let groupId = $(this).attr("groupid");
+                let deleteUrl = accountingUrl+"/group/"+groupId;
+                $.ajax({
+                    url: deleteUrl,
+                    type: 'DELETE',
+                    success: () => {
+                        console.log("group was deleted");
+                        loadGroups(accountingUrl, userId)
+                    },
+                    error: () => {
+                        console.log("group was not deleted");
+                    }
+                });
+            });
+        }
     });
 });
