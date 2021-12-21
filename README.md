@@ -17,14 +17,14 @@ On other branches of this repository I implement other functionalities which wil
 ## Environment variables
 This app needs some environment variables set to run correctly:
 
-EMAIL_PASS=<password to email used for sending emails to registered users>
-EMAIL_USER=<email address used for sending emails to registered users>
-SECRET_KEY=<secret key for flask app>
-SECURITY_PASSWORD_SALT=<pasword salt for flask app>
-SQLALCHEMY_DATABASE_URI=<uri of database>
-URL_IMG=<base url (wthout any endpoints) to img2txt app>
-URL_NLP=<base url (wthout any endpoints) to language_processing app>
-SERVER_NAME=<servername of panelstudenta app>
+```EMAIL_PASS=<password to email used for sending emails to registered users>```
+```EMAIL_USER=<email address used for sending emails to registered users>```
+```SECRET_KEY=<secret key for flask app>```
+```SECURITY_PASSWORD_SALT=<pasword salt for flask app>```
+```SQLALCHEMY_DATABASE_URI=<uri of database>```
+```URL_IMG=<base url (wthout any endpoints) to img2txt app>```
+```URL_NLP=<base url (wthout any endpoints) to language_processing app>```
+```SERVER_NAME=<servername of panelstudenta app>```
 
 [i2t]:<https://github.com/wojciechzyla/img2txt>
 [lp]:<https://github.com/wojciechzyla/language_processing>
