@@ -4,7 +4,7 @@ Main aim of this project is to provide various functionalities useful in student
 
 ## Documents search engine
 First implemented functionality is documents search engine. 
-Registered users can add images or pdfs. Text is extrected from them using my other app [img2tx][i2t]. Then this text is preprocessed and changed to
+Registered users can add images or pdfs. Text is extrected from them using my other app [img2txt][i2t]. Then this text is preprocessed and changed to
 word embeddings via my yet another app [language_processing][lp]. Those embeddings are stored in database. 
 
 When user add several files, for instance pdfs from different academic classes, they can search interesting topics and best matching files are displayed.
