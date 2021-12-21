@@ -10,7 +10,7 @@ word embeddings via my yet another app [language_processing][lp]. Those embeddin
 When user add several files, for instance pdfs from different academic classes, they can search interesting topics and best matching files are displayed.
 Search engingine is also implemented in [language_processing][lp] app. Example query might look like this: "class inheritance in python". Then files ranked 
 from best to worst match are displayed. This search engine is not perfect that is why it is good to add as many key words to the query as possible. It must also
-be noted that right now only documents and queries in polsih language work.
+be noted that for now only documents and queries in polish language are supported.
 
 ## Further development
 On other branches of this repository I implement other functionalities which will be merged to main branch when they are finished.
