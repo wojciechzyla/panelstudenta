@@ -9,7 +9,7 @@ from panelstudenta.general_utils import check_confirmed
 from panelstudenta import db, bcrypt
 from panelstudenta.models import User, File
 from flask_login import current_user, logout_user, login_required, login_user
-import os
+import os, errno
 import datetime
 import threading
 
@@ -195,11 +195,17 @@ def delete_account(token):
         if current_user.is_authenticated:
             logout_user()
         # remove files directory of this user
-        shutil.rmtree(dir_to_files)
+        try:
+            shutil.rmtree(dir_to_files)
+        except FileNotFoundError:
+            pass
         if user.image_file != "default.png":
             # remove profile picture of this user
             path_to_profile_pic = os.path.join(current_app.root_path, "static/profile_pics", user.image_file)
-            os.remove(path_to_profile_pic)
+            try:
+                os.remove(path_to_profile_pic)
+            except OSError:
+                pass
 
         # remove files paths from database
         files_to_del = File.query.filter_by(owner=user).all()
