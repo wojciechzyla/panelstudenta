@@ -28,4 +28,4 @@ This app needs some environment variables set to run correctly:
 - ```SERVER_NAME=<servername of panelstudenta app>```
 
 [i2t]:<https://github.com/wojciechzyla/img2txt>
-[lp]:<https://github.com/wojciechzyla/language_processing>
+ [lp]:<https://github.com/wojciechzyla/language_processing>
